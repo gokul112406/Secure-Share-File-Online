@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="About SecureShare — how AES-256 encryption keeps your files private."/>
+  <title>About — SecureShare</title>
+  <link rel="stylesheet" href="/css/style.css?v=2"/>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="/" class="nav-logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="3" y="11" width="18" height="11" rx="2"/>
+      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+    </svg>
+    SecureShare
+  </a>
+  <ul class="nav-links">
+    <li><a href="/">Upload</a></li>
+    <li><a href="/receive">Receive</a></li>
+    <li><a href="/about" class="active">About</a></li>
+  </ul>
+</nav>
+
+<section class="about-hero animate-in">
+  <div class="hero-badge">🔒 How It Works</div>
+  <h1>Zero-Knowledge<br/>File Sharing</h1>
+  <p style="color:var(--muted);max-width:540px;margin:1rem auto 0;font-size:1.05rem;">
+    SecureShare uses AES-256-GCM — the same cipher used by governments and banks — to ensure your files are unreadable by anyone except the intended recipient.
+  </p>
+</section>
+
+<div class="section-wide">
+
+  <!-- Security Model -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;margin-bottom:3rem;">
+    <div class="card animate-in">
+      <h2 style="font-size:1.1rem;font-weight:800;margin-bottom:1rem;color:var(--accent);">🔐 Encryption Model</h2>
+      <div class="timeline">
+        <div class="timeline-item">
+          <h3>1. Key Generation</h3>
+          <p>A cryptographically random 256-bit (32-byte) private key is generated using Node.js <code>crypto.randomBytes()</code>. This key is shown once and never stored.</p>
+        </div>
+        <div class="timeline-item">
+          <h3>2. AES-256-GCM Encryption</h3>
+          <p>The file is encrypted with AES-256 in Galois/Counter Mode (GCM). A unique 96-bit IV is generated per upload. The auth tag prevents tampering.</p>
+        </div>
+        <div class="timeline-item">
+          <h3>3. Storage</h3>
+          <p>Only the ciphertext, IV, and auth tag are stored in MongoDB. The private key is never written to any database or log.</p>
+        </div>
+        <div class="timeline-item">
+          <h3>4. Decryption</h3>
+          <p>The receiver provides both keys. GCM authentication verifies integrity before decryption proceeds. A wrong key returns an error.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card animate-in">
+      <h2 style="font-size:1.1rem;font-weight:800;margin-bottom:1rem;color:var(--accent2);">🛡️ Security Features</h2>
+      <div style="display:flex;flex-direction:column;gap:0.85rem;">
+        <div style="padding:1rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;">
+          <div style="font-weight:700;margin-bottom:0.3rem;">Rate Limiting</div>
+          <div style="color:var(--muted);font-size:0.83rem;">Max 30 API requests per 10 minutes per IP address to prevent brute-force attacks.</div>
+        </div>
+        <div style="padding:1rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;">
+          <div style="font-weight:700;margin-bottom:0.3rem;">Helmet.js</div>
+          <div style="color:var(--muted);font-size:0.83rem;">HTTP security headers including CSP, X-Frame-Options, and HSTS protection.</div>
+        </div>
+        <div style="padding:1rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;">
+          <div style="font-weight:700;margin-bottom:0.3rem;">File Type Filtering</div>
+          <div style="color:var(--muted);font-size:0.83rem;">Executable files (.exe, .bat, .sh etc.) are rejected at the server level.</div>
+        </div>
+        <div style="padding:1rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;">
+          <div style="font-weight:700;margin-bottom:0.3rem;">Auto-Expiry (TTL)</div>
+          <div style="color:var(--muted);font-size:0.83rem;">MongoDB TTL indexes automatically remove files after expiration — no manual cleanup needed.</div>
+        </div>
+        <div style="padding:1rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;">
+          <div style="font-weight:700;margin-bottom:0.3rem;">GCM Auth Tag</div>
+          <div style="color:var(--muted);font-size:0.83rem;">Any tampered ciphertext or wrong key causes immediate decryption failure with no data leaked.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tech Stack -->
+  <div class="card animate-in" style="margin-bottom:3rem;">
+    <h2 style="font-size:1.1rem;font-weight:800;margin-bottom:1.5rem;">⚙️ Technology Stack</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;">
+      <div class="feature-item"><span class="feature-icon">🟢</span><h3>Node.js</h3><p>Server runtime</p></div>
+      <div class="feature-item"><span class="feature-icon">🚂</span><h3>Express.js</h3><p>REST API framework</p></div>
+      <div class="feature-item"><span class="feature-icon">🍃</span><h3>MongoDB</h3><p>Encrypted storage</p></div>
+      <div class="feature-item"><span class="feature-icon">🔑</span><h3>AES-256-GCM</h3><p>Node.js crypto</p></div>
+      <div class="feature-item"><span class="feature-icon">🎨</span><h3>Vanilla JS</h3><p>Zero framework frontend</p></div>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="card animate-in">
+    <h2 style="font-size:1.1rem;font-weight:800;margin-bottom:1.5rem;">❓ Frequently Asked Questions</h2>
+    <div style="display:flex;flex-direction:column;gap:1rem;">
+      <details style="padding:1rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;cursor:pointer;">
+        <summary style="font-weight:600;">Can SecureShare read my files?</summary>
+        <p style="color:var(--muted);font-size:0.85rem;margin-top:0.75rem;line-height:1.7;">No. The private key is generated client-side during the upload request and displayed once. It is never sent to our database. We only store the encrypted ciphertext which is meaningless without the key.</p>
+      </details>
+      <details style="padding:1rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;cursor:pointer;">
+        <summary style="font-weight:600;">What happens when a file expires?</summary>
+        <p style="color:var(--muted);font-size:0.85rem;margin-top:0.75rem;line-height:1.7;">MongoDB's TTL index automatically deletes expired documents. Any attempt to download after expiration returns a 410 Gone error.</p>
+      </details>
+      <details style="padding:1rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;cursor:pointer;">
+        <summary style="font-weight:600;">What if I enter the wrong private key?</summary>
+        <p style="color:var(--muted);font-size:0.85rem;margin-top:0.75rem;line-height:1.7;">AES-256-GCM's authentication tag will fail verification. You'll receive a decryption error and no partial data is returned.</p>
+      </details>
+      <details style="padding:1rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;cursor:pointer;">
+        <summary style="font-weight:600;">Is the file stored in plain text during transit?</summary>
+        <p style="color:var(--muted);font-size:0.85rem;margin-top:0.75rem;line-height:1.7;">No. The file is encrypted on the server immediately upon receipt using multer's memory storage. The raw bytes never touch the disk.</p>
+      </details>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <p>SecureShare &copy; 2025 — End-to-end encrypted file sharing</p>
+</footer>
+
+<script src="/js/app.js"></script>
+</body>
+</html>

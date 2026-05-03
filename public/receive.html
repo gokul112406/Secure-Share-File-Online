@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="SecureShare — enter your keys to decrypt and download your shared file."/>
+  <title>Receive File — SecureShare</title>
+  <link rel="stylesheet" href="/css/style.css?v=2"/>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="/" class="nav-logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="3" y="11" width="18" height="11" rx="2"/>
+      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+    </svg>
+    SecureShare
+  </a>
+  <ul class="nav-links">
+    <li><a href="/">Upload</a></li>
+    <li><a href="/receive" class="active">Receive</a></li>
+    <li><a href="/about">About</a></li>
+  </ul>
+</nav>
+
+<section class="hero animate-in">
+  <div class="hero-badge">🔓 Decrypt &amp; Download</div>
+  <h1>Receive Your<br/>Encrypted File</h1>
+  <p>Enter the public key and private key provided by the sender to securely decrypt and download your file.</p>
+</section>
+
+<main class="section">
+
+  <!-- Info Panel -->
+  <div class="card animate-in" id="file-info-panel" style="display:none;margin-bottom:1rem;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="font-size:2rem;" id="info-icon">📄</span>
+      <div>
+        <div style="font-weight:700;" id="info-name">—</div>
+        <div style="color:var(--muted);font-size:0.82rem;" id="info-meta">—</div>
+      </div>
+    </div>
+    <div class="expiry-badge" id="info-expiry" style="margin-top:1rem;">⏱ —</div>
+  </div>
+
+  <!-- Decrypt Form -->
+  <div class="card animate-in">
+    <h2 style="font-size:1.2rem;margin-bottom:1.5rem;font-weight:700;">🗝️ Decrypt File</h2>
+
+    <div style="margin-bottom:1rem;">
+      <label for="public-key-input">Public Key (from sender)</label>
+      <input type="text" id="public-key-input" placeholder="e.g. 4f3a8b2c1d..." autocomplete="off" spellcheck="false"/>
+    </div>
+
+    <div style="margin-bottom:1.25rem;">
+      <label for="private-key-input">Private Key (from sender)</label>
+      <input type="text" id="private-key-input" placeholder="64-character hex key…" autocomplete="off" spellcheck="false"/>
+    </div>
+
+    <div class="alert alert-error" id="decrypt-error" role="alert"></div>
+    <div class="alert alert-success" id="decrypt-success" role="alert"></div>
+
+    <button class="btn btn-success" id="decrypt-btn" style="margin-top:0.5rem;">
+      <span class="spinner" id="decrypt-spinner"></span>
+      <span id="decrypt-btn-text">🔓 Decrypt &amp; Download</span>
+    </button>
+  </div>
+
+  <!-- How It Works -->
+  <div class="card animate-in" style="margin-top:1.5rem;">
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;color:var(--accent);">How decryption works</h3>
+    <div class="timeline">
+      <div class="timeline-item">
+        <h3>Step 1 — Get the keys</h3>
+        <p>The sender shares a Public Key (file ID) and a Private Key with you via a secure channel.</p>
+      </div>
+      <div class="timeline-item">
+        <h3>Step 2 — Enter both keys</h3>
+        <p>Paste them into the fields above. Both are required for decryption.</p>
+      </div>
+      <div class="timeline-item">
+        <h3>Step 3 — Secure download</h3>
+        <p>The server uses AES-256-GCM to decrypt the file and streams it directly to your device.</p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <p>SecureShare &copy; 2025 — End-to-end encrypted file sharing</p>
+</footer>
+
+<script src="/js/app.js"></script>
+<script>
+  const pubInput    = document.getElementById('public-key-input');
+  const privInput   = document.getElementById('private-key-input');
+  const decryptBtn  = document.getElementById('decrypt-btn');
+  const errEl       = document.getElementById('decrypt-error');
+  const successEl   = document.getElementById('decrypt-success');
+  const infoPanel   = document.getElementById('file-info-panel');
+  let infoTimer     = null;
+
+  // ── Auto-fetch file info when public key is filled ──
+  pubInput.addEventListener('input', () => {
+    clearTimeout(infoTimer);
+    const key = pubInput.value.trim();
+    if (/^[a-f0-9]{32}$/i.test(key)) {
+      infoTimer = setTimeout(() => fetchFileInfo(key), 600);
+    } else {
+      infoPanel.style.display = 'none';
+    }
+  });
+
+  async function fetchFileInfo(key) {
+    try {
+      const res  = await fetch('/api/file/' + key);
+      const data = await res.json();
+      if (!res.ok) { infoPanel.style.display = 'none'; return; }
+      document.getElementById('info-name').textContent = data.fileName;
+      document.getElementById('info-meta').textContent =
+        formatBytes(data.fileSize) + ' · ' + data.mimeType + ' · Downloaded ' + data.downloadCount + ' time(s)';
+      document.getElementById('info-expiry').textContent =
+        '⏱ Expires: ' + new Date(data.expiresAt).toLocaleString();
+      infoPanel.style.display = '';
+    } catch (_) { infoPanel.style.display = 'none'; }
+  }
+
+  // ── Decrypt ──
+  decryptBtn.addEventListener('click', async () => {
+    const publicKey  = pubInput.value.trim();
+    const privateKey = privInput.value.trim();
+
+    errEl.classList.remove('show'); successEl.classList.remove('show');
+
+    if (!publicKey)  { showErr('Please enter the public key.'); return; }
+    if (!privateKey) { showErr('Please enter the private key.'); return; }
+    if (!/^[a-f0-9]{32}$/i.test(publicKey))  { showErr('Public key must be 32 hex characters.'); return; }
+    if (!/^[a-f0-9]{64}$/i.test(privateKey)) { showErr('Private key must be 64 hex characters.'); return; }
+
+    setDecrypting(true);
+
+    try {
+      const res = await fetch('/api/decrypt', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ publicKey, privateKey }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Decryption failed.');
+      }
+
+      // ── Trigger download ──
+      const fileName = decodeURIComponent(res.headers.get('X-File-Name') || 'download');
+      const blob     = await res.blob();
+      const url      = URL.createObjectURL(blob);
+      const a        = document.createElement('a');
+      a.href = url; a.download = fileName;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      successEl.textContent = '✅ File decrypted and download started!';
+      successEl.classList.add('show');
+    } catch (err) {
+      showErr(err.message);
+    } finally {
+      setDecrypting(false);
+    }
+  });
+
+  function setDecrypting(state) {
+    decryptBtn.disabled = state;
+    document.getElementById('decrypt-spinner').classList.toggle('show', state);
+    document.getElementById('decrypt-btn-text').textContent = state ? 'Decrypting…' : '🔓 Decrypt & Download';
+  }
+
+  function showErr(msg) { errEl.textContent = '❌ ' + msg; errEl.classList.add('show'); }
+
+  // Pre-fill from URL param e.g. /receive?key=abc123
+  const urlKey = new URLSearchParams(window.location.search).get('key');
+  if (urlKey) { pubInput.value = urlKey; pubInput.dispatchEvent(new Event('input')); }
+</script>
+</body>
+</html>

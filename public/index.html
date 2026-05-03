@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="SecureShare — upload and encrypt files using AES-256. Share securely with a unique key pair."/>
+  <title>SecureShare — Encrypted File Sharing</title>
+  <link rel="stylesheet" href="/css/style.css?v=2"/>
+</head>
+<body>
+
+<!-- ── Navbar ── -->
+<nav class="navbar">
+  <a href="/" class="nav-logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="3" y="11" width="18" height="11" rx="2"/>
+      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+    </svg>
+    SecureShare
+  </a>
+  <ul class="nav-links">
+    <li><a href="/" class="active">Upload</a></li>
+    <li><a href="/receive">Receive</a></li>
+    <li><a href="/about">About</a></li>
+  </ul>
+</nav>
+
+<!-- ── Hero ── -->
+<section class="hero animate-in">
+  <div class="hero-badge">⚡ AES-256-GCM Encrypted</div>
+  <h1>Share Files<br/>Without Fear</h1>
+  <p>Your files are encrypted with military-grade AES-256 before leaving your browser. We never see your content.</p>
+</section>
+
+<!-- ── Upload Section ── -->
+<main class="section">
+
+  <!-- Upload Card -->
+  <div class="card animate-in" id="upload-card">
+    <h2 style="font-size:1.2rem;margin-bottom:1.5rem;font-weight:700;">🔐 Encrypt &amp; Upload File</h2>
+
+    <!-- Drop Zone -->
+    <div class="drop-zone" id="drop-zone">
+      <input type="file" id="file-input" aria-label="Choose file to upload"/>
+      <span class="drop-icon">📁</span>
+      <h3>Drop your file here</h3>
+      <p>or click to browse — max 50 MB</p>
+    </div>
+    <div class="file-chosen" id="file-chosen">
+      <span>✅</span>
+      <span id="file-chosen-name"></span>
+      <span id="file-chosen-size" style="color:var(--muted);margin-left:auto;"></span>
+    </div>
+
+    <!-- Expiry -->
+    <div style="margin-top:1.25rem;">
+      <label for="expiry-select">Link Expiry</label>
+      <select id="expiry-select">
+        <option value="1h">1 hour</option>
+        <option value="6h">6 hours</option>
+        <option value="12h">12 hours</option>
+        <option value="24h" selected>24 hours (default)</option>
+        <option value="72h">72 hours</option>
+      </select>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-wrap" id="progress-wrap">
+      <div class="progress-label">
+        <span id="progress-label-text">Encrypting &amp; uploading…</span>
+        <span id="progress-pct">0%</span>
+      </div>
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="progress-bar"></div>
+      </div>
+    </div>
+
+    <!-- Error Alert -->
+    <div class="alert alert-error" id="upload-error" role="alert"></div>
+
+    <!-- Upload Button -->
+    <button class="btn btn-primary" id="upload-btn" style="margin-top:1.5rem;" disabled>
+      <span class="spinner" id="upload-spinner"></span>
+      <span id="upload-btn-text">🔒 Encrypt &amp; Upload</span>
+    </button>
+  </div>
+
+  <!-- ── Result Box (shown after success) ── -->
+  <div class="card result-box" id="result-box">
+    <div style="text-align:center;margin-bottom:1.5rem;">
+      <div style="font-size:3rem;">🎉</div>
+      <h2 style="font-size:1.3rem;font-weight:800;margin-top:0.5rem;">File Encrypted Successfully!</h2>
+      <p style="color:var(--muted);font-size:0.85rem;margin-top:0.4rem;">Share BOTH keys with the receiver. The private key is shown <strong style="color:var(--danger);">only once</strong>.</p>
+    </div>
+
+    <div class="expiry-badge" id="expiry-badge">⏱ Expires: —</div>
+
+    <!-- Public Key -->
+    <div class="key-card">
+      <div class="key-label">🔑 Public Key (Share with receiver)</div>
+      <div class="key-value" id="result-public-key">—</div>
+      <div class="key-actions">
+        <button class="copy-btn" id="copy-public-btn" onclick="copyKey('result-public-key','copy-public-btn')">Copy</button>
+      </div>
+    </div>
+
+    <!-- Private Key -->
+    <div class="key-card" style="border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.05);">
+      <div class="key-label" style="color:var(--danger);">🔐 Private Key — SAVE THIS NOW (never stored)</div>
+      <div class="key-value" id="result-private-key">—</div>
+      <div class="key-actions">
+        <button class="copy-btn" id="copy-private-btn" onclick="copyKey('result-private-key','copy-private-btn')">Copy</button>
+      </div>
+    </div>
+
+    <div class="alert alert-warning show" style="margin-bottom:1rem;">
+      ⚠️ The private key is displayed only once and is NOT stored on our servers. If you lose it, the file cannot be recovered.
+    </div>
+
+    <a href="/receive" class="btn btn-secondary" style="width:100%;text-align:center;justify-content:center;margin-top:0.5rem;">
+      Go to Receive Page →
+    </a>
+    <button class="btn btn-secondary" onclick="resetUpload()" style="margin-top:0.75rem;width:100%;">Upload Another File</button>
+  </div>
+
+</main>
+
+<!-- ── Features ── -->
+<div class="section-wide">
+  <div class="features">
+    <div class="feature-item animate-in">
+      <span class="feature-icon">🔐</span>
+      <h3>AES-256-GCM</h3>
+      <p>Military-grade encryption with authenticated encryption to detect tampering.</p>
+    </div>
+    <div class="feature-item animate-in">
+      <span class="feature-icon">🚫</span>
+      <h3>Zero Knowledge</h3>
+      <p>Your private key never touches our servers. We store only encrypted ciphertext.</p>
+    </div>
+    <div class="feature-item animate-in">
+      <span class="feature-icon">⏱</span>
+      <h3>Auto-Expiry</h3>
+      <p>Files are automatically deleted after your chosen expiry time.</p>
+    </div>
+    <div class="feature-item animate-in">
+      <span class="feature-icon">🛡️</span>
+      <h3>Rate Limited</h3>
+      <p>API rate limiting and Helmet.js protect against abuse and attacks.</p>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>SecureShare &copy; 2026 — End-to-end encrypted file sharing</p>
+</footer>
+
+<script src="/js/app.js"></script>
+<script>
+  // ── Page-specific: Upload logic ──
+  const dropZone    = document.getElementById('drop-zone');
+  const fileInput   = document.getElementById('file-input');
+  const uploadBtn   = document.getElementById('upload-btn');
+  const uploadCard  = document.getElementById('upload-card');
+  const resultBox   = document.getElementById('result-box');
+  const fileChosen  = document.getElementById('file-chosen');
+  let selectedFile  = null;
+
+  fileInput.addEventListener('change', () => handleFile(fileInput.files[0]));
+
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('dragover');
+    handleFile(e.dataTransfer.files[0]);
+  });
+
+  function handleFile(file) {
+    if (!file) return;
+    if (file.size > 50 * 1024 * 1024) { showUploadError('File exceeds 50 MB limit.'); return; }
+    selectedFile = file;
+    document.getElementById('file-chosen-name').textContent = file.name;
+    document.getElementById('file-chosen-size').textContent = formatBytes(file.size);
+    fileChosen.classList.add('show');
+    uploadBtn.disabled = false;
+    hideUploadError();
+  }
+
+  uploadBtn.addEventListener('click', async () => {
+    if (!selectedFile) return;
+    setUploading(true);
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('expiresIn', document.getElementById('expiry-select').value);
+
+    try {
+      const res  = await fetch('/api/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed.');
+      showResult(data);
+    } catch (err) {
+      showUploadError(err.message);
+    } finally {
+      setUploading(false);
+    }
+  });
+
+  function setUploading(state) {
+    uploadBtn.disabled = state;
+    document.getElementById('upload-spinner').classList.toggle('show', state);
+    document.getElementById('upload-btn-text').textContent = state ? 'Encrypting…' : '🔒 Encrypt & Upload';
+    const pw = document.getElementById('progress-wrap');
+    pw.classList.toggle('show', state);
+    if (state) animateProgress();
+  }
+
+  function animateProgress() {
+    let pct = 0;
+    const bar   = document.getElementById('progress-bar');
+    const pctEl = document.getElementById('progress-pct');
+    const iv = setInterval(() => {
+      pct = Math.min(pct + Math.random() * 12, 92);
+      bar.style.width = pct + '%';
+      pctEl.textContent = Math.round(pct) + '%';
+      if (pct >= 92) clearInterval(iv);
+    }, 120);
+  }
+
+  function showResult(data) {
+    document.getElementById('result-public-key').textContent  = data.publicKey;
+    document.getElementById('result-private-key').textContent = data.privateKey;
+    document.getElementById('expiry-badge').textContent = '⏱ Expires: ' + new Date(data.expiresAt).toLocaleString();
+    uploadCard.style.display = 'none';
+    resultBox.classList.add('show');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function resetUpload() {
+    selectedFile = null; fileInput.value = '';
+    fileChosen.classList.remove('show');
+    uploadBtn.disabled = true;
+    document.getElementById('progress-wrap').classList.remove('show');
+    uploadCard.style.display = '';
+    resultBox.classList.remove('show');
+  }
+
+  function showUploadError(msg) {
+    const el = document.getElementById('upload-error');
+    el.textContent = '❌ ' + msg; el.classList.add('show');
+  }
+  function hideUploadError() { document.getElementById('upload-error').classList.remove('show'); }
+</script>
+</body>
+</html>
